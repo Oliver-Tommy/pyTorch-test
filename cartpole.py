@@ -11,7 +11,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-env = gym.make("CartPole-v1")
+#env = gym.make("CartPole-v1")
+env = gym.make("CartPole-v1", render_mode="human")
 
 # set up matplotlib
 is_ipython = 'inline' in matplotlib.get_backend()
@@ -82,7 +83,7 @@ memory = ReplayMemory(10000)
 steps_done = 0
 
 # Initialize num_episodes globally
-num_episodes = 500  # Default number of episodes
+num_episodes = 500  # Number of episodes
 
 def select_action(state):
     global steps_done
@@ -172,12 +173,16 @@ def optimize_model():
 
 # Main Training Loop
 for i_episode in range(num_episodes):
-    # Initialize the environment and get its state
     state, info = env.reset()
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+    
     for t in count():
         action = select_action(state)
         observation, reward, terminated, truncated, _ = env.step(action.item())
+        
+        # Renders each frame
+        env.render()  # Add this line
+        
         reward = torch.tensor([reward], device=device)
         done = terminated or truncated
 
@@ -207,13 +212,10 @@ for i_episode in range(num_episodes):
             plot_durations()
             break
 
-    # Update num_episodes based on the system's hardware
-    if torch.cuda.is_available() or torch.backends.mps.is_available():
-        num_episodes = 600
-    else:
-        num_episodes = 500
 
 print('Complete')
 plot_durations(show_result=True)
 plt.ioff()
 plt.show()
+
+env.close()
